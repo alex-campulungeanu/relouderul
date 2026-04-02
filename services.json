@@ -1,0 +1,18 @@
+{
+  "first": {
+    "name": "service name 1",
+    "command": [
+      "first",
+      "second"
+    ],
+    "watch_path": "service path"
+  },
+  "second": {
+    "name": "service name 2",
+    "command": [
+      "first",
+      "second"
+    ],
+    "watch_path": "service path"
+  }
+}
