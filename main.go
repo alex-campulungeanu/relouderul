@@ -17,7 +17,7 @@ import (
 
 	"alex-campulungeanu.github.com/relouderul/pkg/config"
 	"alex-campulungeanu.github.com/relouderul/pkg/helper"
-	rlogger "alex-campulungeanu.github.com/relouderul/pkg/logger"
+	"alex-campulungeanu.github.com/relouderul/pkg/rlogger"
 	"github.com/fsnotify/fsnotify"
 )
 
