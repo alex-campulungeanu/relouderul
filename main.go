@@ -15,9 +15,9 @@ import (
 	"syscall"
 	"time"
 
-	"alex-campulungeanu.github.com/relouderul/pkg/config"
-	"alex-campulungeanu.github.com/relouderul/pkg/helper"
-	"alex-campulungeanu.github.com/relouderul/pkg/rlogger"
+	"github.com/alex-campulungeanu/logarul"
+	"github.com/alex-campulungeanu/relouderul/pkg/config"
+	"github.com/alex-campulungeanu/relouderul/pkg/helper"
 	"github.com/fsnotify/fsnotify"
 )
 
@@ -204,11 +204,18 @@ func run(serviceKey string, configService config.Service) {
 }
 
 func main() {
-	logFile, err := rlogger.InitLogger("./data/kubernetes.log", slog.LevelInfo)
+	// logFile, err := rlogger.InitLogger("./data/kubernetes.log", slog.LevelInfo)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// defer logFile.Close()
+	cfg := logarul.NewMinimalConfig()
+	cfg.Level = slog.LevelInfo
+	logger, err := logarul.New(cfg)
 	if err != nil {
 		panic(err)
 	}
-	defer logFile.Close()
+	slog.SetDefault(logger)
 
 	service := flag.String("service", "", "Service to run")
 	edit := flag.Bool("edit", false, "Edit the config file")

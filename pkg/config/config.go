@@ -10,7 +10,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"alex-campulungeanu.github.com/relouderul/pkg/helper"
+	"github.com/alex-campulungeanu/relouderul/pkg/helper"
 )
 
 type Runner interface {
