@@ -18,17 +18,17 @@ A Go-based file watcher and process manager that automatically restarts a monito
 ## Installation
 
 ```bash
-go build -o relouderul
+make build
 ```
 
 ## Usage
 
 ```bash
 # Run a service
-./relouderul --service=<service-name>
+./dist/rld --service=<service-name>
 
 # Edit config file
-./relouderul --edit
+./dist/rld --edit
 ```
 
 ## Configuration
@@ -40,7 +40,7 @@ The config file is stored at `~/.config/relouderul/config.json`. If it doesn't e
 Use the `--edit` flag to open the config file in your default editor:
 
 ```bash
-./relouderul --edit
+./dist/rld --edit
 ```
 
 Set the `EDITOR` environment variable to specify your preferred editor (e.g., `export EDITOR=vim`).

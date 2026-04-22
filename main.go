@@ -217,7 +217,7 @@ func main() {
 	}
 	slog.SetDefault(logger)
 
-	service := flag.String("service", "", "Service to run")
+	serviceName := flag.String("service", "", "Service to run")
 	edit := flag.Bool("edit", false, "Edit the config file")
 	flag.Parse()
 
@@ -230,13 +230,13 @@ func main() {
 		err := configService.Edit()
 		if err != nil {
 			slog.Error("error edit config file", "err", err)
-			return
 		}
+		return
 	}
 
-	if *service == "" {
+	if *serviceName == "" {
 		log.Fatal("Usage: --service=<name>")
 	}
 
-	run(*service, configService)
+	run(*serviceName, configService)
 }

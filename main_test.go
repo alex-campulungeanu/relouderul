@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"alex-campulungeanu.github.com/relouderul/pkg/config"
+	"github.com/alex-campulungeanu/relouderul/pkg/config"
 )
 
 func testRunner() *Runner {
