@@ -1,13 +1,10 @@
 package main
 
 import (
-	"context"
-	"errors"
 	"flag"
 	"log"
 	"log/slog"
 	"os"
-	"os/exec"
 	"os/signal"
 	"path/filepath"
 	"strings"
@@ -18,103 +15,9 @@ import (
 	"github.com/alex-campulungeanu/logarul"
 	"github.com/alex-campulungeanu/relouderul/pkg/config"
 	"github.com/alex-campulungeanu/relouderul/pkg/helper"
+	"github.com/alex-campulungeanu/relouderul/pkg/runner"
 	"github.com/fsnotify/fsnotify"
 )
-
-type Runner struct {
-	service    config.ServiceInfo
-	cmd        *exec.Cmd
-	cmdLock    sync.Mutex
-	cancelFunc context.CancelFunc
-}
-
-func (r *Runner) startProcess(ctx context.Context) error {
-	r.cmdLock.Lock()
-	defer r.cmdLock.Unlock()
-
-	slog.Info("▶ Service path", "path", r.service.Path)
-	slog.Info("▶ Starting", "service", r.service.Name)
-	slog.Info("📦 Command:", "command", r.service.Command)
-	slog.Info("📦 Watch path:", "watch_path", r.service.WatchPath)
-
-	cmd := exec.CommandContext(ctx, r.service.Command[0], r.service.Command[1:]...)
-	cmd.Dir = r.service.Path
-	if _, err := exec.LookPath(r.service.Command[0]); err != nil {
-		slog.Error("command not found", "command", r.service.Command[0])
-		return nil
-	}
-
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	cmd.SysProcAttr = &syscall.SysProcAttr{Setpgid: true}
-
-	if err := cmd.Start(); err != nil {
-		slog.Error("❌ Failed to start cmd.Start:", "err", err)
-		return err
-	}
-
-	r.cmd = cmd
-
-	go func() {
-		err := cmd.Wait()
-		if err != nil && !errors.Is(err, context.Canceled) {
-			slog.Info("⚠ Process exited with error", "err", err)
-		} else {
-			slog.Info("ℹ Process exited")
-		}
-	}()
-
-	return nil
-}
-
-func (r *Runner) stopProcess(timeout time.Duration) {
-	r.cmdLock.Lock()
-	defer r.cmdLock.Unlock()
-
-	if r.cmd == nil || r.cmd.Process == nil {
-		slog.Error("Failed to get pgid, killing single process")
-		return
-	}
-
-	slog.Info("Stopping process group")
-	pgid, err := syscall.Getpgid(r.cmd.Process.Pid)
-	if err != nil {
-		slog.Error("Failed to get pgid, killing single process")
-		_ = r.cmd.Process.Kill()
-		return
-	}
-
-	_ = syscall.Kill(-pgid, syscall.SIGTERM)
-
-	done := make(chan error, 1)
-	go func() {
-		done <- r.cmd.Wait()
-	}()
-
-	select {
-	case <-done:
-		slog.Info("✅ Process stopped")
-	case <-time.After(timeout):
-		slog.Info("⚠ Force killing process...")
-		_ = syscall.Kill(-pgid, syscall.SIGKILL)
-	}
-}
-
-func (r *Runner) restart() {
-	if r.cancelFunc != nil {
-		r.cancelFunc()
-	}
-
-	r.stopProcess(3 * time.Second)
-
-	ctx, cancel := context.WithCancel(context.Background())
-	r.cancelFunc = cancel
-
-	if err := r.startProcess(ctx); err != nil {
-		slog.Error("❌ Failed to start:", "err", err)
-		return
-	}
-}
 
 func run(serviceKey string, configService config.Service) {
 
@@ -131,12 +34,12 @@ func run(serviceKey string, configService config.Service) {
 		return
 	}
 
-	runner := &Runner{
-		service: service,
+	runner := &runner.Runner{
+		Service: service,
 	}
 
 	// Initial start
-	runner.restart()
+	runner.Restart()
 
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -149,7 +52,7 @@ func run(serviceKey string, configService config.Service) {
 		slog.Error("Error when watching", "err", err)
 	}
 
-	if err := helper.WatchRecursive(watcher, filepath.Join(runner.service.Path, "libs")); err != nil {
+	if err := helper.WatchRecursive(watcher, filepath.Join(runner.Service.Path, "libs")); err != nil {
 		slog.Error("error with recursive", "err", err)
 	}
 
@@ -169,7 +72,7 @@ func run(serviceKey string, configService config.Service) {
 
 		debounceTimer = time.AfterFunc(500*time.Millisecond, func() {
 			log.Println("🔁 Restarting due to changes...")
-			runner.restart()
+			runner.Restart()
 		})
 	}
 
@@ -180,8 +83,10 @@ func run(serviceKey string, configService config.Service) {
 	for {
 		select {
 		case event := <-watcher.Events:
-			if strings.HasSuffix(event.Name, ".py") {
-				triggerRestart()
+			for _, s := range runner.Service.Extensions {
+				if strings.HasSuffix(event.Name, s) {
+					triggerRestart()
+				}
 			}
 
 			// Handle new directories (important!)
@@ -197,7 +102,7 @@ func run(serviceKey string, configService config.Service) {
 
 		case sig := <-sigChan:
 			log.Printf("✋ Received signal: %v", sig)
-			runner.stopProcess(3 * time.Second)
+			runner.StopProcess(3 * time.Second)
 			return
 		}
 	}

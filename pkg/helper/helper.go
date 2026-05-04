@@ -1,6 +1,7 @@
 package helper
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 
@@ -21,4 +22,15 @@ func WatchRecursive(watcher *fsnotify.Watcher, root string) error {
 		}
 		return nil
 	})
+}
+
+func ValidateJson(filePath string, v interface{}) error {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return err
+	}
+	dec := json.NewDecoder(file)
+	dec.DisallowUnknownFields()
+
+	return dec.Decode(v)
 }

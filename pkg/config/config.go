@@ -83,6 +83,22 @@ func (fs FileStore) Read() (ConfigStructure, error) {
 	if err != nil {
 		return ConfigStructure{}, err
 	}
+	var config ConfigStructure
+	err = helper.ValidateJson(configFilePath, &config)
+	if err != nil {
+		return ConfigStructure{}, err
+	}
+	// file, err := os.Open(configFilePath)
+	// if err != nil {
+	// 	return ConfigStructure{}, err
+	// }
+	// dec := json.NewDecoder(file)
+	// dec.DisallowUnknownFields()
+	// var validate ConfigStructure
+	// if err := dec.Decode(&validate); err != nil {
+	// 	return ConfigStructure{}, err
+	// }
+
 	rawData, err := os.ReadFile(configFilePath)
 	configData := ConfigStructure{}
 	if err := json.Unmarshal(rawData, &configData); err != nil {
