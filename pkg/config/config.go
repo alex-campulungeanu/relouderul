@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 
 	"github.com/alex-campulungeanu/relouderul/pkg/helper"
+	"github.com/go-playground/validator/v10"
 )
 
 type Runner interface {
@@ -83,30 +84,24 @@ func (fs FileStore) Read() (ConfigStructure, error) {
 	if err != nil {
 		return ConfigStructure{}, err
 	}
-	var config ConfigStructure
-	err = helper.ValidateJson(configFilePath, &config)
+
+	rawData, err := os.ReadFile(configFilePath)
 	if err != nil {
 		return ConfigStructure{}, err
 	}
-	// file, err := os.Open(configFilePath)
-	// if err != nil {
-	// 	return ConfigStructure{}, err
-	// }
-	// dec := json.NewDecoder(file)
-	// dec.DisallowUnknownFields()
-	// var validate ConfigStructure
-	// if err := dec.Decode(&validate); err != nil {
-	// 	return ConfigStructure{}, err
-	// }
-
-	rawData, err := os.ReadFile(configFilePath)
-	configData := ConfigStructure{}
+	var configData ConfigStructure
 	if err := json.Unmarshal(rawData, &configData); err != nil {
 		return ConfigStructure{}, err
 	}
-	if err != nil {
-		return ConfigStructure{}, err
+
+	validate := validator.New()
+	for key, svc := range configData {
+		if err := validate.Struct(svc); err != nil {
+			slog.Error("Config validation error", "service", key, "err", err)
+			return ConfigStructure{}, err
+		}
 	}
+
 	return configData, nil
 }
 

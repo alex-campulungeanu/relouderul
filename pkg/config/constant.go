@@ -4,11 +4,11 @@ const configFileName = "config.json"
 const configFileDir = "relouderul"
 
 type ServiceInfo struct {
-	Path       string   `json:"path"`
-	Name       string   `json:"name"`
-	Command    []string `json:"command"`
-	WatchPath  string   `json:"watch_path"`
-	Extensions []string `json:"extensions"`
+	Path       string   `json:"path" validate:"required"`
+	Name       string   `json:"name" validate:"required"`
+	Command    []string `json:"command" validate:"required"`
+	WatchPath  string   `json:"watch_path" validate:"required"`
+	Extensions []string `json:"extensions" validate:"required"`
 }
 
 type ConfigStructure map[string]ServiceInfo
