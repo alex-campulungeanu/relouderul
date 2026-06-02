@@ -109,11 +109,6 @@ func run(serviceKey string, configService config.Service) {
 }
 
 func main() {
-	// logFile, err := rlogger.InitLogger("./data/kubernetes.log", slog.LevelInfo)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// defer logFile.Close()
 	cfg := logarul.NewMinimalConfig()
 	cfg.Level = slog.LevelInfo
 	logger, err := logarul.New(cfg)
@@ -124,6 +119,7 @@ func main() {
 
 	serviceName := flag.String("service", "", "Service to run")
 	edit := flag.Bool("edit", false, "Edit the config file")
+	list := flag.Bool("list", false, "List services in the config file")
 	flag.Parse()
 
 	store := config.FileStore{PathProvider: config.NewOSPathProvider()}
@@ -136,6 +132,16 @@ func main() {
 		if err != nil {
 			slog.Error("error edit config file", "err", err)
 		}
+		return
+	}
+
+	if *list {
+		keys, err := configService.ListServices()
+		if err != nil {
+			slog.Error("error listing services", "err", err)
+			return
+		}
+		slog.Info("Available services:", "services", keys)
 		return
 	}
 

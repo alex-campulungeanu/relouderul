@@ -7,11 +7,12 @@ import (
 	"time"
 
 	"github.com/alex-campulungeanu/relouderul/pkg/config"
+	"github.com/alex-campulungeanu/relouderul/pkg/runner"
 )
 
-func testRunner() *Runner {
-	return &Runner{
-		service: config.ServiceInfo{
+func testRunner() *runner.Runner {
+	return &runner.Runner{
+		Service: config.ServiceInfo{
 			Name:      "test-service",
 			Path:      "/tmp",
 			Command:   []string{"echo", "test"},
@@ -25,18 +26,18 @@ func TestRunnerStartProcessS(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := runner.startProcess(ctx)
+	err := runner.StartProcess(ctx)
 	if err != nil {
 		t.Fatalf("startProcess failed: %v", err)
 	}
-	if runner.cmd == nil {
+	if runner.Cmd == nil {
 		t.Error("cmd should not be nil after startProcess")
 	}
 
-	if runner.cmd.Process == nil {
+	if runner.Cmd.Process == nil {
 		t.Error("Process should not be nil after startProcess")
 	}
-	runner.stopProcess(3 * time.Second)
+	runner.StopProcess(3 * time.Second)
 }
 
 func TestRunnerStopProcess(t *testing.T) {
@@ -44,14 +45,14 @@ func TestRunnerStopProcess(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := runner.startProcess(ctx)
+	err := runner.StartProcess(ctx)
 	if err != nil {
 		t.Fatalf("startProcess failed: %v", err)
 	}
 
 	// runner.stopProcess(3 * time.Second)
-	if runner.cmd != nil && runner.cmd.Process != nil {
-		ps := exec.Command("ps", "-p", string(rune(runner.cmd.Process.Pid)))
+	if runner.Cmd != nil && runner.Cmd.Process != nil {
+		ps := exec.Command("ps", "-p", string(rune(runner.Cmd.Process.Pid)))
 		_, err := ps.Output()
 		if err == nil {
 			t.Error("Process should have been killed")
@@ -64,28 +65,28 @@ func TestRunnerRestart(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := runner.startProcess(ctx)
+	err := runner.StartProcess(ctx)
 	if err != nil {
 		t.Fatalf("startProcess failed: %v", err)
 	}
 
-	firstPID := runner.cmd.Process.Pid
-	runner.restart()
+	firstPID := runner.Cmd.Process.Pid
+	runner.Restart()
 
-	if runner.cmd == nil || runner.cmd.Process == nil {
+	if runner.Cmd == nil || runner.Cmd.Process == nil {
 		t.Error("cmd should not be nil after restart")
 	}
 
-	if runner.cmd.Process.Pid == firstPID {
+	if runner.Cmd.Process.Pid == firstPID {
 		t.Error("Process PID should be different after restart")
 	}
 
-	runner.stopProcess(3 * time.Second)
+	runner.StopProcess(3 * time.Second)
 }
 
 func TestRunnerStartProcessCommandNotFound(t *testing.T) {
-	runner := &Runner{
-		service: config.ServiceInfo{
+	runner := &runner.Runner{
+		Service: config.ServiceInfo{
 			Name:      "test",
 			Path:      "/tmp",
 			Command:   []string{"command-that-definitely-does-not-exist-12345"},
@@ -95,11 +96,11 @@ func TestRunnerStartProcessCommandNotFound(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := runner.startProcess(ctx)
+	err := runner.StartProcess(ctx)
 	if err != nil {
 		t.Fatalf("startProcess should return nil for not found command: %v", err)
 	}
-	if runner.cmd != nil {
+	if runner.Cmd != nil {
 		t.Error("cmd should be nil when command not found")
 	}
 }

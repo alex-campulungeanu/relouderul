@@ -71,10 +71,14 @@ Without flags, this will prompt for a service name. Provide the `--service` flag
 go run main.go --service=first
 ```
 
+### Testing
+
+Run all tests with:
+
+```bash
+go test ./...
+```
+
 ### Rebuild on Changes
 
 For automatic rebuilding of the relouderul binary itself, you can use a tool like `air` or run a separate file watcher on the Go source files.
-
-### Debugging
-
-Logs are written to `./data/kubernetes.log` by default. Check this file for runtime information about watched events, process restarts, and any errors.

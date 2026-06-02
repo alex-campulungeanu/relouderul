@@ -134,6 +134,18 @@ func (s *Service) Edit() error {
 	return s.Editor.Edit()
 }
 
+func (s *Service) ListServices() ([]string, error) {
+	configData, err := s.Read()
+	if err != nil {
+		return nil, err
+	}
+	keys := make([]string, 0, len(configData))
+	for k := range configData {
+		keys = append(keys, k)
+	}
+	return keys, nil
+}
+
 func NewOSPathProvider() OSPathProvider {
 	return OSPathProvider{
 		HomeDirFunc: helper.HomeDir,
